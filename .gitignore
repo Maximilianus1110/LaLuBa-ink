@@ -1,0 +1,25 @@
+# Dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# Next.js build & output
+/.next/
+/out/
+/build
+
+# Vercel
+.vercel
+
+# Env & TypeScript
+.env*.local
+.env
+*.tsbuildinfo
+next-env.d.ts
+
+# Python / OS / Logs
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+npm-debug.log*
