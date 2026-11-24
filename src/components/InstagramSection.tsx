@@ -77,7 +77,6 @@ export function InstagramSection({
   );
   const dialogRef = useRef<HTMLDialogElement | null>(null);
 
-  // Synchronisiere die aktuellsten 6 Beiträge von /api/instagram
   useEffect(() => {
     let active = true;
     fetch("/api/instagram")
@@ -147,11 +146,21 @@ export function InstagramSection({
   return (
     <section
       id="instagram"
-      className="relative mx-auto max-w-4xl px-5 py-12 md:px-8 md:py-16"
+      className="relative mx-auto max-w-4xl px-5 pt-6 pb-14 md:px-8 md:pb-20"
     >
-      {/* Kompakte Instagram-Karte im Stil von design/insta-einbindung.png (Dark Noir) */}
+      {/* Übergangs-Überschrift exakt wie in der Skizze */}
+      <div className="mb-6 text-center">
+        <h2 className="font-editorial text-xl font-semibold text-[#f2f0f1] sm:text-2xl">
+          Weitere Inspirationen
+        </h2>
+        <p className="mt-1 text-xs text-[#9a9598]">
+          Die letzten 6 Beiträge synchron von{" "}
+          <span className="text-[#eab8c9]">@laluba.ink</span>
+        </p>
+      </div>
+
+      {/* Kompakte Instagram-Karte im dunklen Design */}
       <div className="mx-auto max-w-xl rounded-2xl border border-white/10 bg-[#0e0e10] p-4 shadow-xl sm:p-6">
-        {/* Top Profile Row */}
         <div className="flex items-center justify-between gap-3 pb-4">
           <div className="flex items-center gap-3.5">
             <div className="relative h-14 w-14 shrink-0 rounded-full border border-[#d9789b]/50 bg-[#050506] p-0.5">
@@ -162,9 +171,9 @@ export function InstagramSection({
             </div>
 
             <div className="min-w-0">
-              <h2 className="truncate text-sm font-bold text-[#f2f0f1] sm:text-base">
+              <p className="truncate text-sm font-bold text-[#f2f0f1] sm:text-base">
                 laluba.ink
-              </h2>
+              </p>
               <p className="truncate text-xs text-[#9a9598]">
                 Tattoo Artist · Fürth / Nürnberg
               </p>
@@ -181,9 +190,7 @@ export function InstagramSection({
           </a>
         </div>
 
-        {/* Hairline Divider */}
         <div className="border-t border-white/[0.08] pt-4">
-          {/* Kompaktes 3x2 Grid der letzten 6 Beiträge */}
           <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
             {posts.slice(0, 6).map((post) => (
               <button
@@ -204,7 +211,6 @@ export function InstagramSection({
           </div>
         </div>
 
-        {/* Bottom Caption */}
         <p className="mt-4 text-center text-xs leading-relaxed text-[#9a9598]">
           Folge{" "}
           <a

@@ -40,7 +40,6 @@ export default function RootLayout({
   return (
     <html lang="de" className={`${bodoniModa.variable} ${plusJakarta.variable}`}>
       <body className="min-h-screen bg-[#050506] text-[#f2f0f1] selection:bg-[#d9789b] selection:text-[#050506]">
-        <div id="scroll-progress" aria-hidden="true" />
         {children}
       </body>
     </html>

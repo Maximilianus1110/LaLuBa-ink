@@ -51,7 +51,7 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
     );
     camera.position.z = 4.2;
 
-    // 1. Minimalist Monochrome Dark-Silk / Ink Shader
+    // 1. Liquid Silk / Ink Shader (stärkerer Kontrast & Präsenz für Mobile)
     const uniforms = {
       uTime: { value: 0 },
       uPointer: { value: new THREE.Vector2(0.5, 0.5) },
@@ -108,39 +108,46 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
         void main() {
           vec2 st = vUv;
           float aspect = uResolution.x / max(1.0, uResolution.y);
-          vec2 p = (st - 0.5) * vec2(aspect, 1.0) * 2.1;
+          vec2 p = (st - 0.5) * vec2(aspect, 1.0) * 2.25;
 
-          vec2 pointerOffset = (uPointer - 0.5) * vec2(aspect, 1.0) * 0.45;
-          float t = uTime * 0.14 + uScroll * 0.35;
+          // Autonomes sanftes Strömen (damit auch Mobile ohne Maus lebendig wirkt)
+          vec2 autoDrift = vec2(sin(uTime * 0.28) * 0.18, cos(uTime * 0.22) * 0.14);
+          vec2 pointerOffset = (uPointer - 0.5) * vec2(aspect, 1.0) * 0.55 + autoDrift;
+          float t = uTime * 0.19 + uScroll * 0.45;
 
           vec2 q = vec2(
             fbm(p + vec2(0.0, t)),
-            fbm(p + vec2(4.2, -t * 0.7))
+            fbm(p + vec2(4.2, -t * 0.78))
           );
 
           vec2 r = vec2(
-            fbm(p + 2.2 * q + vec2(1.7, 9.2) - pointerOffset + 0.1 * t),
-            fbm(p + 2.2 * q + vec2(8.3, 2.8) + pointerOffset - 0.08 * t)
+            fbm(p + 2.3 * q + vec2(1.7, 9.2) - pointerOffset + 0.14 * t),
+            fbm(p + 2.3 * q + vec2(8.3, 2.8) + pointerOffset - 0.11 * t)
           );
 
-          float f = fbm(p + 1.8 * r);
+          float f = fbm(p + 1.9 * r);
 
-          // Pure matte black + subtle graphite silk + whisper of dusty rose
-          vec3 colObsidian = vec3(0.02, 0.02, 0.024);
-          vec3 colGraphite = vec3(0.085, 0.082, 0.092);
+          // Stärkere Graphit-Seide & Altrosa-Adern für Mobile-Displays
+          vec3 colObsidian = vec3(0.02, 0.02, 0.025);
+          vec3 colGraphite = vec3(0.16, 0.14, 0.17);
           vec3 colDustyRose = vec3(0.85, 0.47, 0.61);
+          vec3 colBlush = vec3(0.92, 0.72, 0.79);
 
-          vec3 col = mix(colObsidian, colGraphite, smoothstep(0.32, 0.85, f));
+          vec3 col = mix(colObsidian, colGraphite, smoothstep(0.24, 0.80, f));
 
-          float sheen = smoothstep(0.74, 0.96, dot(r, q));
-          col += colDustyRose * sheen * 0.09;
+          float vein = smoothstep(0.54, 0.86, f);
+          col += colDustyRose * vein * 0.28;
 
-          // Subtle pointer light
-          float dist = length((st - uPointer) * vec2(aspect, 1.0));
-          float aura = exp(-dist * 4.2) * 0.055;
-          col += vec3(0.95, 0.93, 0.94) * aura;
+          float sheen = smoothstep(0.66, 0.94, dot(r, q));
+          col += colBlush * sheen * 0.24;
 
-          float vig = smoothstep(1.3, 0.25, length((st - 0.5) * vec2(1.05, 1.0)));
+          // Dezentes Lichtzentrum auf Mobile & Desktop
+          vec2 lightCenter = mix(uPointer, vec2(0.5) + autoDrift * 0.6, 0.45);
+          float dist = length((st - lightCenter) * vec2(aspect, 1.0));
+          float aura = exp(-dist * 3.1) * 0.12;
+          col += colDustyRose * aura;
+
+          float vig = smoothstep(1.38, 0.22, length((st - 0.5) * vec2(1.0, 0.92)));
           col *= vig;
 
           gl_FragColor = vec4(col, 0.98);
@@ -153,24 +160,24 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
     planeMesh.position.z = -1.5;
     scene.add(planeMesh);
 
-    // 2. Subtle Sparse Micro-Sparkles (48 fine particles in silver & dusty rose)
-    const particleCount = 48;
+    // 2. 90 vierzackige Sparkles in Silberweiß & Altrosa
+    const particleCount = 90;
     const positions = new Float32Array(particleCount * 3);
     const colors = new Float32Array(particleCount * 3);
     const sizes = new Float32Array(particleCount);
     const seeds = new Float32Array(particleCount);
 
-    const silver = new THREE.Color("#e8e4e6");
+    const silver = new THREE.Color("#f2f0f1");
     const dustyRose = new THREE.Color("#d9789b");
 
     for (let i = 0; i < particleCount; i++) {
       positions[i * 3] = (Math.random() - 0.5) * 8.5;
       positions[i * 3 + 1] = (Math.random() - 0.5) * 6.5;
       positions[i * 3 + 2] = (Math.random() - 0.5) * 2.5;
-      sizes[i] = Math.random() * 9 + 5;
+      sizes[i] = Math.random() * 14 + 8;
       seeds[i] = Math.random() * Math.PI * 2;
 
-      const palette = i % 4 === 0 ? dustyRose : silver;
+      const palette = i % 3 === 0 ? dustyRose : silver;
       colors[i * 3] = palette.r;
       colors[i * 3 + 1] = palette.g;
       colors[i * 3 + 2] = palette.b;
@@ -202,13 +209,13 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
         void main() {
           vColor = color;
           vec3 pos = position;
-          pos.y += sin(uTime * 0.32 + aSeed) * 0.16;
-          pos.x += cos(uTime * 0.25 + aSeed * 1.2) * 0.12;
+          pos.y += sin(uTime * 0.42 + aSeed) * 0.22;
+          pos.x += cos(uTime * 0.34 + aSeed * 1.2) * 0.16;
 
           vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
           gl_Position = projectionMatrix * mvPosition;
           gl_PointSize = aSize * uPixelRatio * (1.0 / max(0.8, -mvPosition.z));
-          vAlpha = 0.18 + 0.28 * sin(uTime * 1.1 + aSeed);
+          vAlpha = 0.36 + 0.48 * sin(uTime * 1.3 + aSeed);
         }
       `,
       fragmentShader: `
@@ -217,8 +224,11 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
 
         void main() {
           vec2 uv = gl_PointCoord - 0.5;
-          float core = exp(-length(uv) * 8.5);
-          float alpha = clamp(core, 0.0, 1.0) * vAlpha;
+          float ax = abs(uv.x);
+          float ay = abs(uv.y);
+          float star = 1.0 - smoothstep(0.0, 0.42, pow(ax, 0.58) * pow(ay, 0.58) * 4.4 + length(uv) * 0.85);
+          float core = exp(-length(uv) * 7.2);
+          float alpha = clamp(star + core * 0.65, 0.0, 1.0) * vAlpha;
           if (alpha < 0.02) discard;
           gl_FragColor = vec4(vColor, alpha);
         }
@@ -233,6 +243,12 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
     const onPointerMove = (e: PointerEvent) => {
       targetPointer.x = e.clientX / Math.max(1, window.innerWidth);
       targetPointer.y = 1.0 - e.clientY / Math.max(1, window.innerHeight);
+    };
+
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 0) return;
+      targetPointer.x = e.touches[0].clientX / Math.max(1, window.innerWidth);
+      targetPointer.y = 1.0 - e.touches[0].clientY / Math.max(1, window.innerHeight);
     };
 
     const onScroll = () => {
@@ -254,6 +270,7 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
     };
 
     window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("touchmove", onTouchMove, { passive: true });
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onResize);
 
@@ -266,9 +283,9 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
 
       if (!pausedRef.current && !prefersReduced) {
         uniforms.uTime.value += dt;
-        uniforms.uPointer.value.lerp(targetPointer, 0.05);
-        points.rotation.y = (uniforms.uPointer.value.x - 0.5) * 0.16;
-        points.rotation.x = (uniforms.uPointer.value.y - 0.5) * -0.12;
+        uniforms.uPointer.value.lerp(targetPointer, 0.06);
+        points.rotation.y = (uniforms.uPointer.value.x - 0.5) * 0.22;
+        points.rotation.x = (uniforms.uPointer.value.y - 0.5) * -0.16;
       }
 
       renderer?.render(scene, camera);
@@ -285,6 +302,7 @@ export function InkCanvas3D({ isPaused }: InkCanvas3DProps) {
     return () => {
       cancelAnimationFrame(rafId);
       window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("touchmove", onTouchMove);
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onResize);
       planeGeo.dispose();

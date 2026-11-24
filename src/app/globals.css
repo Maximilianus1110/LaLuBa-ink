@@ -33,14 +33,10 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* Scroll Progress Indicator (Modern Web Guidance: scroll-progress-indicator) */
-#scroll-progress {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
+/* Integrated Scroll Progress Indicator inside Top Header & Mobile Dock (Modern Web Guidance) */
+.scroll-progress-bar {
   height: 2px;
-  z-index: 60;
+  width: 100%;
   background: linear-gradient(90deg, rgba(234, 184, 201, 0.45) 0%, #d9789b 100%);
   transform-origin: 0 50%;
   transform: scaleX(0);
@@ -58,9 +54,9 @@ body {
       }
     }
 
-    #scroll-progress {
+    .scroll-progress-bar {
       animation: grow-progress auto linear;
-      animation-timeline: scroll();
+      animation-timeline: scroll(root);
     }
   }
 }
@@ -98,6 +94,44 @@ dialog::backdrop {
       opacity: 1;
       transform: translateY(0) scale(1);
     }
+  }
+}
+
+/* Native <details> Accordion styling (Modern Web Guidance: accordion) */
+.aftercare-accordion summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.aftercare-accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.aftercare-accordion summary .accordion-chevron {
+  transition: transform 0.2s ease;
+  transform: rotate(-90deg);
+}
+
+.aftercare-accordion details[open] > summary .accordion-chevron {
+  transform: rotate(0deg);
+}
+
+.aftercare-accordion details::details-content {
+  interpolate-size: allow-keywords;
+  overflow: clip;
+  contain: layout;
+}
+
+.aftercare-accordion details:not([open])::details-content {
+  block-size: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .aftercare-accordion details::details-content {
+    transition: block-size, content-visibility, display;
+    transition-duration: 0.28s;
+    transition-timing-function: ease-in-out;
+    transition-behavior: allow-discrete;
   }
 }
 

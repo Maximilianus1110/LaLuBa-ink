@@ -8,6 +8,7 @@ import {
   MessageCircle,
   Pause,
   Play,
+  Sparkles,
 } from "lucide-react";
 import { STUDIO_CONFIG } from "@/config/studio";
 import { LaLuBaLogo } from "./LaLuBaLogo";
@@ -18,6 +19,23 @@ import { InstagramSection } from "./InstagramSection";
 import { TattooConfigurator } from "./TattooConfigurator";
 import { AftercareSection } from "./AftercareSection";
 
+type SectionId =
+  | "start"
+  | "atelier"
+  | "galerie"
+  | "instagram"
+  | "ideen-check"
+  | "aftercare";
+
+const SECTION_ORDER: SectionId[] = [
+  "start",
+  "atelier",
+  "galerie",
+  "instagram",
+  "ideen-check",
+  "aftercare",
+];
+
 export function StudioShell() {
   const [isMotionPaused, setIsMotionPaused] = useState<boolean>(false);
   const [preselectedVibe, setPreselectedVibe] = useState<string | null>(null);
@@ -25,14 +43,51 @@ export function StudioShell() {
     string | null
   >(null);
   const [expandSignal, setExpandSignal] = useState<number>(0);
+  const [activeSection, setActiveSection] = useState<SectionId>("start");
+
+  // Track active section reliably across mobile & desktop viewports
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updateActiveFromScroll = () => {
+      const scrollY = window.scrollY;
+      if (scrollY < 120) {
+        setActiveSection("start");
+        return;
+      }
+
+      const nearBottom =
+        window.innerHeight + scrollY >=
+        document.documentElement.scrollHeight - 60;
+      if (nearBottom) {
+        setActiveSection("aftercare");
+        return;
+      }
+
+      const probeY = scrollY + window.innerHeight * 0.36;
+      let current: SectionId = "start";
+      for (const id of SECTION_ORDER) {
+        const el = document.getElementById(id);
+        if (el && el.offsetTop <= probeY) {
+          current = id;
+        }
+      }
+      setActiveSection(current);
+    };
+
+    updateActiveFromScroll();
+    window.addEventListener("scroll", updateActiveFromScroll, { passive: true });
+    window.addEventListener("resize", updateActiveFromScroll);
+    return () => {
+      window.removeEventListener("scroll", updateActiveFromScroll);
+      window.removeEventListener("resize", updateActiveFromScroll);
+    };
+  }, []);
 
   // Scroll Progress Fallback for browsers without CSS scroll-driven animations (Modern Web Guidance)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (CSS.supports("animation-timeline", "scroll()")) return;
-
-    const progressEl = document.getElementById("scroll-progress");
-    if (!progressEl) return;
+    if (CSS.supports("animation-timeline", "scroll(root)")) return;
 
     const updateProgress = () => {
       const scrollable = Math.max(
@@ -40,7 +95,11 @@ export function StudioShell() {
         document.documentElement.scrollHeight - window.innerHeight
       );
       const ratio = Math.min(1, Math.max(0, window.scrollY / scrollable));
-      progressEl.style.transform = `scaleX(${ratio})`;
+      document
+        .querySelectorAll<HTMLElement>(".scroll-progress-bar")
+        .forEach((bar) => {
+          bar.style.transform = `scaleX(${ratio})`;
+        });
     };
 
     updateProgress();
@@ -58,13 +117,22 @@ export function StudioShell() {
     setExpandSignal((n) => n + 1);
   };
 
+  const navItems: { id: SectionId; label: string }[] = [
+    { id: "atelier", label: "Atelier" },
+    { id: "galerie", label: "Top 3" },
+    { id: "instagram", label: "Instagram" },
+    { id: "ideen-check", label: "Kontakt" },
+    { id: "aftercare", label: "Aftercare" },
+  ];
+
   return (
     <div className="relative min-h-screen pb-24 md:pb-0">
-      {/* Minimal Sticky Top Header */}
-      <header className="fixed top-[2px] right-0 left-0 z-50 border-b border-white/[0.08] bg-[#050506]/80 backdrop-blur-lg">
+      {/* Minimal Sticky Top Header mit integriertem Progress-Balken am unteren Rand */}
+      <header className="fixed top-0 right-0 left-0 z-50 border-b border-white/[0.08] bg-[#050506]/85 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5 md:px-8">
           <a
             href="#start"
+            aria-current={activeSection === "start" ? "location" : undefined}
             className="flex items-center gap-2.5 focus-visible:outline-none"
           >
             <LaLuBaLogo compact className="h-9 w-9" />
@@ -80,23 +148,25 @@ export function StudioShell() {
 
           <nav
             aria-label="Hauptnavigation"
-            className="hidden items-center gap-6 text-[11px] font-medium tracking-[0.16em] text-[#9a9598] uppercase md:flex"
+            className="hidden items-center gap-6 text-[11px] font-medium tracking-[0.16em] uppercase md:flex"
           >
-            <a href="#atelier" className="transition hover:text-[#f2f0f1]">
-              Atelier
-            </a>
-            <a href="#galerie" className="transition hover:text-[#f2f0f1]">
-              Top 3
-            </a>
-            <a href="#instagram" className="transition hover:text-[#f2f0f1]">
-              Instagram
-            </a>
-            <a href="#ideen-check" className="transition hover:text-[#f2f0f1]">
-              Kontakt
-            </a>
-            <a href="#aftercare" className="transition hover:text-[#f2f0f1]">
-              Aftercare
-            </a>
+            {navItems.map((item) => {
+              const isCurrent = activeSection === item.id;
+              return (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  aria-current={isCurrent ? "location" : undefined}
+                  className={`border-b-2 py-1 transition ${
+                    isCurrent
+                      ? "border-[#d9789b] text-[#f2f0f1]"
+                      : "border-transparent text-[#9a9598] hover:text-[#f2f0f1]"
+                  }`}
+                >
+                  {item.label}
+                </a>
+              );
+            })}
           </nav>
 
           <div className="flex items-center gap-2.5">
@@ -134,6 +204,9 @@ export function StudioShell() {
             </a>
           </div>
         </div>
+
+        {/* Fortschrittsbalken direkt im Header unter Logo & Kontakt */}
+        <div className="scroll-progress-bar" aria-hidden="true" />
       </header>
 
       <main>
@@ -187,38 +260,68 @@ export function StudioShell() {
         </div>
       </footer>
 
-      {/* Monochrome Mobile Thumb Dock */}
+      {/* Mobile App-Style Bottom Bar mit aktivem Section-Highlight & integriertem Progress-Balken */}
       <nav
         aria-label="Mobile Schnellnavigation"
-        className="fixed right-3 bottom-3 left-3 z-50 mx-auto flex max-w-md items-center justify-around rounded-xl border border-white/15 bg-[#0e0e10]/92 px-2 py-2 backdrop-blur-xl md:hidden"
+        className="fixed right-3 bottom-3 left-3 z-50 mx-auto max-w-md overflow-hidden rounded-xl border border-white/15 bg-[#0e0e10]/94 shadow-2xl backdrop-blur-xl md:hidden"
       >
-        <a
-          href="#galerie"
-          className="flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium text-[#9a9598] hover:text-[#f2f0f1]"
-        >
-          <Grid3X3 className="h-4 w-4 text-[#d9789b]" />
-          <span>Top 3</span>
-        </a>
-        <a
-          href="#instagram"
-          className="flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium text-[#9a9598] hover:text-[#f2f0f1]"
-        >
-          <Instagram className="h-4 w-4" />
-          <span>Insta</span>
-        </a>
-        <a
-          href="#ideen-check"
-          className="rounded bg-[#f2f0f1] px-4 py-2 text-[11px] font-bold tracking-wider text-[#050506] uppercase"
-        >
-          Kontakt
-        </a>
-        <a
-          href="#aftercare"
-          className="flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium text-[#9a9598] hover:text-[#f2f0f1]"
-        >
-          <HeartHandshake className="h-4 w-4" />
-          <span>Pflege</span>
-        </a>
+        <div className="scroll-progress-bar" aria-hidden="true" />
+        <div className="grid grid-cols-5 items-center gap-1 px-1.5 py-1.5">
+          {[
+            {
+              id: "start" as SectionId,
+              match: ["start", "atelier"] as SectionId[],
+              label: "Start",
+              icon: Sparkles,
+            },
+            {
+              id: "galerie" as SectionId,
+              match: ["galerie"] as SectionId[],
+              label: "Top 3",
+              icon: Grid3X3,
+            },
+            {
+              id: "instagram" as SectionId,
+              match: ["instagram"] as SectionId[],
+              label: "Insta",
+              icon: Instagram,
+            },
+            {
+              id: "ideen-check" as SectionId,
+              match: ["ideen-check"] as SectionId[],
+              label: "Kontakt",
+              icon: MessageCircle,
+            },
+            {
+              id: "aftercare" as SectionId,
+              match: ["aftercare"] as SectionId[],
+              label: "Pflege",
+              icon: HeartHandshake,
+            },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const isActive = tab.match.includes(activeSection);
+            return (
+              <a
+                key={tab.id}
+                href={`#${tab.id}`}
+                aria-current={isActive ? "location" : undefined}
+                className={`relative flex flex-col items-center justify-center gap-0.5 rounded-lg py-1.5 text-[10px] font-semibold transition ${
+                  isActive
+                    ? "bg-[#f2f0f1] text-[#050506] shadow-sm"
+                    : "text-[#9a9598] hover:text-[#f2f0f1]"
+                }`}
+              >
+                <Icon
+                  className={`h-3.5 w-3.5 ${
+                    isActive ? "text-[#050506]" : "text-[#d9789b]"
+                  }`}
+                />
+                <span>{tab.label}</span>
+              </a>
+            );
+          })}
+        </div>
       </nav>
     </div>
   );
