@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from "react";
 import {
   Grid3X3,
-  HeartHandshake,
+  HelpCircle,
   Instagram,
   MessageCircle,
   Pause,
@@ -17,7 +17,7 @@ import { AboutSection } from "./AboutSection";
 import { MasterpieceGallery } from "./MasterpieceGallery";
 import { InstagramSection } from "./InstagramSection";
 import { TattooConfigurator } from "./TattooConfigurator";
-import { AftercareSection } from "./AftercareSection";
+import { GoodToKnowSection } from "./GoodToKnowSection";
 
 type SectionId =
   | "start"
@@ -25,7 +25,7 @@ type SectionId =
   | "galerie"
   | "instagram"
   | "ideen-check"
-  | "aftercare";
+  | "wissen";
 
 const SECTION_ORDER: SectionId[] = [
   "start",
@@ -33,7 +33,7 @@ const SECTION_ORDER: SectionId[] = [
   "galerie",
   "instagram",
   "ideen-check",
-  "aftercare",
+  "wissen",
 ];
 
 export function StudioShell() {
@@ -45,7 +45,6 @@ export function StudioShell() {
   const [expandSignal, setExpandSignal] = useState<number>(0);
   const [activeSection, setActiveSection] = useState<SectionId>("start");
 
-  // Track active section reliably across mobile & desktop viewports
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -60,7 +59,7 @@ export function StudioShell() {
         window.innerHeight + scrollY >=
         document.documentElement.scrollHeight - 60;
       if (nearBottom) {
-        setActiveSection("aftercare");
+        setActiveSection("wissen");
         return;
       }
 
@@ -84,7 +83,6 @@ export function StudioShell() {
     };
   }, []);
 
-  // Scroll Progress Fallback for browsers without CSS scroll-driven animations (Modern Web Guidance)
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (CSS.supports("animation-timeline", "scroll(root)")) return;
@@ -122,12 +120,12 @@ export function StudioShell() {
     { id: "galerie", label: "Top 3" },
     { id: "instagram", label: "Instagram" },
     { id: "ideen-check", label: "Kontakt" },
-    { id: "aftercare", label: "Aftercare" },
+    { id: "wissen", label: "Wissenswertes" },
   ];
 
   return (
     <div className="relative min-h-screen pb-24 md:pb-0">
-      {/* Minimal Sticky Top Header mit integriertem Progress-Balken am unteren Rand */}
+      {/* Minimal Sticky Top Header mit integriertem Progress-Balken */}
       <header className="fixed top-0 right-0 left-0 z-50 border-b border-white/[0.08] bg-[#050506]/85 backdrop-blur-lg">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-5 md:px-8">
           <a
@@ -205,7 +203,6 @@ export function StudioShell() {
           </div>
         </div>
 
-        {/* Fortschrittsbalken direkt im Header unter Logo & Kontakt */}
         <div className="scroll-progress-bar" aria-hidden="true" />
       </header>
 
@@ -219,10 +216,10 @@ export function StudioShell() {
           preselectedInspiration={preselectedInspiration}
           expandSignal={expandSignal}
         />
-        <AftercareSection />
+        <GoodToKnowSection />
       </main>
 
-      {/* Clean Footer */}
+      {/* Clean Footer (ohne Link zur versteckten /aftercare-Unterseite) */}
       <footer className="border-t border-white/[0.08] bg-[#050506] py-10">
         <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-5 px-5 text-center md:flex-row md:px-8 md:text-left">
           <div className="flex items-center gap-3">
@@ -293,10 +290,10 @@ export function StudioShell() {
               icon: MessageCircle,
             },
             {
-              id: "aftercare" as SectionId,
-              match: ["aftercare"] as SectionId[],
-              label: "Pflege",
-              icon: HeartHandshake,
+              id: "wissen" as SectionId,
+              match: ["wissen"] as SectionId[],
+              label: "Tipps",
+              icon: HelpCircle,
             },
           ].map((tab) => {
             const Icon = tab.icon;
